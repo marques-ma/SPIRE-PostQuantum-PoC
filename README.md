@@ -1,5 +1,22 @@
 ![SPIRE Logo](/doc/images/spire_logo.png)
 
+# IMPORTANT!!  
+This repository contains a SPIRE fork that leverages a local OQS-OpenSSL binary to include post quantum crypto material (i.e., Certificate and Private key). 
+
+It is a **PROOF OF CONCEPT** that is not intended to be used in production environments.
+
+# Requirements  
+- OQS-OpenSSL fork installed (https://github.com/open-quantum-safe/openssl)  
+- Go ^1.23  
+
+# Details
+The SPIRE Server CA now has a new function: GenWorkloadPQX509SVID, that is called when a new X509SVID is created.  
+In this PoC, all SVID certificates have an additional DNSName: an encoded string that contains the PQ certificate and private key, to be used by the workload in such connections.
+
+An example is available at https://github.com/marques-ma/pq-tls-poc
+
+---
+
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3303/badge)](https://bestpractices.coreinfrastructure.org/projects/3303)
 [![Build Status](https://github.com/spiffe/spire/actions/workflows/pr_build.yaml/badge.svg)](https://github.com/spiffe/spire/actions/workflows/pr_build.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/spiffe/spire)](https://goreportcard.com/report/github.com/spiffe/spire)
