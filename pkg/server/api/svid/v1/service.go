@@ -21,6 +21,19 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"path/filepath"
+)
+
+var (
+	// SPIRE PQC
+	hybridDir    = "/home/byron/spire/hybrid"           // MUST BE ADJUSTED!!!! TODO: USE ENV VAR!!! Base directory for hybrid PoC files 
+	keysDir      = filepath.Join(hybridDir, "keys")
+	csrDir       = filepath.Join(hybridDir, "csr")
+	certsDir     = filepath.Join(hybridDir, "certs")
+	configFile   = filepath.Join(hybridDir, "openssl.cnf") // OpenSSL config file for hybrid setup
+	caCertFile   = filepath.Join(hybridDir, "ca_cert.pem")      // CA certificate 
+	caKeyFile    = filepath.Join(hybridDir, "ca_key.pem")      // CA private key for signing
 )
 
 // RegisterService registers the service on the gRPC server.
@@ -108,11 +121,22 @@ func (s *Service) MintX509SVID(ctx context.Context, req *svidv1.MintX509SVIDRequ
 		return nil, api.MakeErr(log, codes.InvalidArgument, "CSR DNS name contains a wildcard that covers another non-wildcard name", err)
 	}
 
+	// NOW, INCLUDE HERE THE PQ CODE
+	concatenatedResult, err := s.ca.GenWorkloadPQX509SVID(ctx, id.String()) 
+	if err != nil {
+		return nil, api.MakeErr(log, codes.Internal, "failed to sign PQ-X509-SVID", err)
+	}
+	// fmt.Println("Constructed Hint:", concatenatedResult) 
+
+
+	newDNS := append(dnsNames, concatenatedResult)
+	// fmt.Println("Appended to DnsNames:", newDNS) 
+
 	x509SVID, err := s.ca.SignWorkloadX509SVID(ctx, ca.WorkloadX509SVIDParams{
 		SPIFFEID:  id,
 		PublicKey: csr.PublicKey,
 		TTL:       time.Duration(req.Ttl) * time.Second,
-		DNSNames:  dnsNames,
+		DNSNames:  newDNS,
 		Subject:   csr.Subject,
 	})
 	if err != nil {
@@ -271,10 +295,24 @@ func (s *Service) newX509SVID(ctx context.Context, param *svidv1.NewX509SVIDPara
 	}
 	log = log.WithField(telemetry.SPIFFEID, spiffeID.String())
 
+	// Request the workload PQ crypto material
+	workloadPqMaterial, err := s.ca.GenWorkloadPQX509SVID(ctx, spiffeID.String()) 
+	if err != nil {
+		return &svidv1.BatchNewX509SVIDResponse_Result{
+			Status: api.MakeStatus(log, codes.Internal, "failed to sign PQ-X509-SVID", err),
+		}
+	}
+	// fmt.Println("Constructed Hint:", concatenatedResult) 
+
+	// Include the workloadPqMaterial string as the last DnsName value to make it reach the destiny!
+	newDNS := append(entry.DnsNames, workloadPqMaterial)
+	// fmt.Println("Appended to DnsNames:", newDNS) 
+
+
 	x509Svid, err := s.ca.SignWorkloadX509SVID(ctx, ca.WorkloadX509SVIDParams{
 		SPIFFEID:  spiffeID,
 		PublicKey: csr.PublicKey,
-		DNSNames:  entry.DnsNames,
+		DNSNames:  newDNS,
 		TTL:       time.Duration(entry.X509SvidTtl) * time.Second,
 	})
 	if err != nil {

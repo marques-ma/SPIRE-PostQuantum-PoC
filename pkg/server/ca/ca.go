@@ -23,10 +23,29 @@ import (
 	"github.com/spiffe/spire/pkg/common/x509util"
 	"github.com/spiffe/spire/pkg/server/credtemplate"
 	"github.com/spiffe/spire/pkg/server/credvalidator"
+
+	// SPIRE PQC
+	"github.com/marques-ma/oqsopenssl"
+	"path/filepath"
+	"os"
+	"encoding/pem"
+	"regexp"
+	"io/ioutil"
 )
 
 const (
 	backdate = 10 * time.Second
+)
+
+var (
+	// SPIRE PQC
+	hybridDir    = "/home/byron/spire/hybrid"           //TODO: ENV VAR!!!! // Base directory for hybrid PoC files
+	keysDir      = filepath.Join(hybridDir, "keys")
+	csrDir       = filepath.Join(hybridDir, "csr")
+	certsDir     = filepath.Join(hybridDir, "certs")
+	configFile   = filepath.Join(hybridDir, "openssl.cnf") // OpenSSL config file for hybrid setup
+	caCertFile   = filepath.Join(hybridDir, "ca_cert.pem")      // CA certificate for signing
+	caKeyFile    = filepath.Join(hybridDir, "ca_key.pem")      // CA private key
 )
 
 // ServerCA is an interface for Server CAs
@@ -37,6 +56,10 @@ type ServerCA interface {
 	SignWorkloadX509SVID(ctx context.Context, params WorkloadX509SVIDParams) ([]*x509.Certificate, error)
 	SignWorkloadJWTSVID(ctx context.Context, params WorkloadJWTSVIDParams) (string, error)
 	TaintedAuthorities() <-chan []*x509.Certificate
+
+	// PQ-SVID POC
+	GenWorkloadPQX509SVID(ctx context.Context, spiffeID string) (string, error)	
+
 }
 
 // DownstreamX509CAParams are parameters relevant to downstream X.509 CA creation
@@ -286,6 +309,7 @@ func (ca *CA) SignAgentX509SVID(ctx context.Context, params AgentX509SVIDParams)
 	return svidChain, nil
 }
 
+// SignWorkloadX509SVID signs a CSR for a workload and returns the certificate chain.
 func (ca *CA) SignWorkloadX509SVID(ctx context.Context, params WorkloadX509SVIDParams) ([]*x509.Certificate, error) {
 	x509CA, caChain, err := ca.getX509CA()
 	if err != nil {
@@ -314,6 +338,69 @@ func (ca *CA) SignWorkloadX509SVID(ctx context.Context, params WorkloadX509SVIDP
 	}
 
 	return svidChain, nil
+}
+
+// GenWorkloadPQX509SVID signs a CSR for a workload USING HYBRID PQ
+func (ca *CA) GenWorkloadPQX509SVID(ctx context.Context, spiffeID string) (string, error) {
+
+	// Replace non-alphanumeric characters in spiffeID to make it filename-safe
+	filenameSafeID := sanitizeFilename(spiffeID)
+
+	// Generate a private key for the workload
+	keyFile := filepath.Join(keysDir, fmt.Sprintf("%s_key.pem", filenameSafeID))
+	err := oqsopenssl.GeneratePrivateKey("p384_dilithium3", keyFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate private key: %w", err)
+	}
+
+	// Create a CSR
+	csrFile := filepath.Join(csrDir, fmt.Sprintf("%s.csr", filenameSafeID))
+	subj := fmt.Sprintf("/C=US/ST=California/L=Mountain View/O=Example Corp/CN=%s", filenameSafeID)
+
+	// TODO: ALLOW TO USE DIFFERENT ALGORITHMS (CAN ALSO BE ENV VAR)
+	err = oqsopenssl.GenerateCSR("p384_dilithium3", keyFile, csrFile, subj, spiffeID, configFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate CSR: %w", err)
+	}
+
+	// Sign the CSR to create the Hybrid PQ certificate
+	svidFile := filepath.Join(certsDir, fmt.Sprintf("%s.crt", filenameSafeID))
+	err = oqsopenssl.SignCertificate(csrFile, caCertFile, caKeyFile, spiffeID, svidFile, 365)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign workload X509 SVID: %w", err)
+	}
+
+	// Load the signed certificate
+	leafCertChain, err := loadCertificateChain(svidFile)
+	if err != nil || len(leafCertChain) == 0 {
+		return "", fmt.Errorf("failed to load signed certificate chain: %w", err)
+	}
+
+	// Load the CA certificate (PQ trust bundle)
+	trustBundle, err := loadCertificateChain(caCertFile)
+	if err != nil || len(trustBundle) == 0 {
+		return "", fmt.Errorf("failed to load CA certificate as trust bundle: %w", err)
+	}
+
+	// // Validate the PQ cert using CA cert
+	// if err := oqsopenssl.ValidateCertificate(svidFile, caCertFile); err != nil {
+	// 	return "", fmt.Errorf("invalid workload X509-SVID: %w", err)
+	// }
+
+	// Read the private key and certificate into strings
+	keyContent, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to read private key: %w", err)
+	}
+	certContent, err := ioutil.ReadFile(svidFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to read signed certificate: %w", err)
+	}
+
+	// Create a concatenated string containing the key and cert
+	combinedKeyCert := fmt.Sprintf("%s%s", string(keyContent), string(certContent))
+
+	return combinedKeyCert, nil
 }
 
 func (ca *CA) SignWorkloadJWTSVID(ctx context.Context, params WorkloadJWTSVIDParams) (string, error) {
@@ -393,4 +480,33 @@ func (ca *CA) signJWTSVID(jwtKey *JWTKey, claims map[string]any) (string, error)
 
 func makeCertChain(x509CA *X509CA, leaf *x509.Certificate) []*x509.Certificate {
 	return append([]*x509.Certificate{leaf}, x509CA.UpstreamChain...)
+}
+
+func loadCertificateChain(certPath string) ([]*x509.Certificate, error) {
+	certBytes, err := os.ReadFile(certPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
+	}
+
+	var certs []*x509.Certificate
+	for len(certBytes) > 0 {
+		block, rest := pem.Decode(certBytes)
+		if block == nil {
+			break
+		}
+		certBytes = rest
+
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse certificate: %w", err)
+		}
+		certs = append(certs, cert)
+	}
+	return certs, nil
+}
+
+// sanitizeFilename replaces non-alphanumeric characters with underscores for filename safety.
+func sanitizeFilename(spiffeID string) string {
+	re := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	return re.ReplaceAllString(spiffeID, "-")
 }
