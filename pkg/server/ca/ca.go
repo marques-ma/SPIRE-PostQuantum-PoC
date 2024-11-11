@@ -25,12 +25,13 @@ import (
 	"github.com/spiffe/spire/pkg/server/credvalidator"
 
 	// SPIRE PQC
-	"github.com/marques-ma/oqsopenssl"
+	oqsopenssl "github.com/marques-ma/pq-openssl-3.x"
 	"path/filepath"
 	"os"
 	"encoding/pem"
 	"regexp"
 	"io/ioutil"
+
 )
 
 const (
@@ -355,7 +356,7 @@ func (ca *CA) GenWorkloadPQX509SVID(ctx context.Context, spiffeID string) (strin
 
 	// Create a CSR
 	csrFile := filepath.Join(csrDir, fmt.Sprintf("%s.csr", filenameSafeID))
-	subj := fmt.Sprintf("/C=US/ST=California/L=Mountain View/O=Example Corp/CN=%s", filenameSafeID)
+	subj := fmt.Sprintf("/C=US/ST=California/L=Mountain-View/O=Example-Corp/CN=%s", filenameSafeID)
 
 	// TODO: ALLOW TO USE DIFFERENT ALGORITHMS (CAN ALSO BE ENV VAR)
 	err = oqsopenssl.GenerateCSR("p384_dilithium3", keyFile, csrFile, subj, spiffeID, configFile)
