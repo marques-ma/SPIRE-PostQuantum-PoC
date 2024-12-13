@@ -31,6 +31,7 @@ import (
 	"encoding/pem"
 	"regexp"
 	"io/ioutil"
+	"encoding/json"
 
 )
 
@@ -181,6 +182,8 @@ func NewCA(config Config) *CA {
 		ca: ca,
 		td: config.TrustDomain,
 	})
+
+	oqsopenssl.StartOQSContainer()
 
 	return ca
 }
@@ -344,6 +347,8 @@ func (ca *CA) SignWorkloadX509SVID(ctx context.Context, params WorkloadX509SVIDP
 // GenWorkloadPQX509SVID signs a CSR for a workload USING HYBRID PQ
 func (ca *CA) GenWorkloadPQX509SVID(ctx context.Context, spiffeID string) (string, error) {
 
+	defer timeTrack(time.Now(), "GenWorkloadPQX509SVID")
+
 	// Replace non-alphanumeric characters in spiffeID to make it filename-safe
 	filenameSafeID := sanitizeFilename(spiffeID)
 
@@ -383,10 +388,10 @@ func (ca *CA) GenWorkloadPQX509SVID(ctx context.Context, spiffeID string) (strin
 		return "", fmt.Errorf("failed to load CA certificate as trust bundle: %w", err)
 	}
 
-	// // Validate the PQ cert using CA cert
-	// if err := oqsopenssl.ValidateCertificate(svidFile, caCertFile); err != nil {
-	// 	return "", fmt.Errorf("invalid workload X509-SVID: %w", err)
-	// }
+	// Validate the PQ cert using CA cert
+	if err := oqsopenssl.ValidateCertificate(svidFile, caCertFile); err != nil {
+		return "", fmt.Errorf("invalid workload X509-SVID: %w", err)
+	}
 
 	// Read the private key and certificate into strings
 	keyContent, err := ioutil.ReadFile(keyFile)
@@ -510,4 +515,21 @@ func loadCertificateChain(certPath string) ([]*x509.Certificate, error) {
 func sanitizeFilename(spiffeID string) string {
 	re := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	return re.ReplaceAllString(spiffeID, "-")
+}
+
+func timeTrack(start time.Time, name string) error {
+	elapsed := time.Since(start)
+	fmt.Printf("\n%s execution time is %s\n", name, elapsed)
+
+	// If the file doesn't exist, create it, or append to the file
+	file, err := os.OpenFile("./bench.data", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("Failed creating benchmark file: %w", err)
+	}
+	// log.Printf("Writing to file...")
+	json.NewEncoder(file).Encode(fmt.Sprintf("%s, %s", name, elapsed))
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("Failed encoding results: %w",err)
+	}
+	return nil
 }

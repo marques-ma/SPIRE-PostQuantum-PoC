@@ -23,6 +23,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"path/filepath"
+	"fmt"
+	"encoding/json"
+	"os"
 )
 
 var (
@@ -73,6 +76,9 @@ type Service struct {
 }
 
 func (s *Service) MintX509SVID(ctx context.Context, req *svidv1.MintX509SVIDRequest) (*svidv1.MintX509SVIDResponse, error) {
+	
+	defer timeTrack(time.Now(), "MintX509SVID")
+
 	log := rpccontext.Logger(ctx)
 	rpccontext.AddRPCAuditFields(ctx, logrus.Fields{
 		telemetry.Csr: api.HashByte(req.Csr),
@@ -251,6 +257,9 @@ func (s *Service) fetchEntries(ctx context.Context, log logrus.FieldLogger) (map
 
 // newX509SVID creates an X509-SVID using data from registration entry and key from CSR
 func (s *Service) newX509SVID(ctx context.Context, param *svidv1.NewX509SVIDParams, entries map[string]*types.Entry) *svidv1.BatchNewX509SVIDResponse_Result {
+
+	defer timeTrack(time.Now(), "newX509SVID")
+
 	log := rpccontext.Logger(ctx)
 
 	switch {
@@ -514,4 +523,21 @@ func parseAndCheckCSR(ctx context.Context, csrBytes []byte) (*x509.CertificateRe
 	}
 
 	return csr, nil
+}
+
+func timeTrack(start time.Time, name string) error {
+	elapsed := time.Since(start)
+	fmt.Printf("\n%s execution time is %s\n", name, elapsed)
+
+	// If the file doesn't exist, create it, or append to the file
+	file, err := os.OpenFile("./bench.data", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("Failed creating benchmark file: %w", err)
+	}
+	// log.Printf("Writing to file...")
+	json.NewEncoder(file).Encode(fmt.Sprintf("%s, %s", name, elapsed))
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("Failed encoding results: %w",err)
+	}
+	return nil
 }

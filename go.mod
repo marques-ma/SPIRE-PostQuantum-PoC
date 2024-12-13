@@ -2,6 +2,8 @@ module github.com/spiffe/spire
 
 go 1.23.3
 
+require github.com/marques-ma/pq-openssl-3.x v1.3.0
+
 require (
 	cloud.google.com/go/iam v1.2.1
 	cloud.google.com/go/kms v1.20.0
@@ -63,7 +65,6 @@ require (
 	github.com/jinzhu/gorm v1.9.16
 	github.com/lestrrat-go/jwx/v2 v2.1.1
 	github.com/lib/pq v1.10.9
-	github.com/marques-ma/pq-openssl-3.x v1.0.0
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/mitchellh/cli v1.1.5
 	github.com/open-policy-agent/opa v0.69.0
