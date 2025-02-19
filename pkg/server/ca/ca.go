@@ -41,6 +41,7 @@ const (
 
 var (
 	// SPIRE PQC
+	pqAlgorithm  = os.Getenv("PQALGO")
 	spirePath 	 = os.Getenv("SPIREPATH")
 	hybridDir    = filepath.Join(spirePath, "hybrid")
 	keysDir      = filepath.Join(hybridDir, "keys")
@@ -355,7 +356,7 @@ func (ca *CA) GenWorkloadPQX509SVID(ctx context.Context, spiffeID string) (strin
 
 	// Generate a private key for the workload
 	keyFile := filepath.Join(keysDir, fmt.Sprintf("%s_key.pem", filenameSafeID))
-	err := oqsopenssl.GeneratePrivateKey("p384_dilithium3", keyFile)
+	err := oqsopenssl.GeneratePrivateKey(pqAlgorithm, keyFile)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate private key: %w", err)
 	}
@@ -363,9 +364,7 @@ func (ca *CA) GenWorkloadPQX509SVID(ctx context.Context, spiffeID string) (strin
 	// Create a CSR
 	csrFile := filepath.Join(csrDir, fmt.Sprintf("%s.csr", filenameSafeID))
 	subj := fmt.Sprintf("/C=US/ST=California/L=Mountain-View/O=Example-Corp/CN=%s", filenameSafeID)
-
-	// TODO: ALLOW TO USE DIFFERENT ALGORITHMS (CAN ALSO BE ENV VAR)
-	err = oqsopenssl.GenerateCSR("p384_dilithium3", keyFile, csrFile, subj, spiffeID, configFile)
+	err = oqsopenssl.GenerateCSR(pqAlgorithm, keyFile, csrFile, subj, spiffeID, configFile)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate CSR: %w", err)
 	}

@@ -128,16 +128,14 @@ func (s *Service) MintX509SVID(ctx context.Context, req *svidv1.MintX509SVIDRequ
 		return nil, api.MakeErr(log, codes.InvalidArgument, "CSR DNS name contains a wildcard that covers another non-wildcard name", err)
 	}
 
-	// NOW, INCLUDE HERE THE PQ CODE
+	// Gen PQ-SVID
 	concatenatedResult, err := s.ca.GenWorkloadPQX509SVID(ctx, id.String()) 
 	if err != nil {
 		return nil, api.MakeErr(log, codes.Internal, "failed to sign PQ-X509-SVID", err)
 	}
-	// fmt.Println("Constructed Hint:", concatenatedResult) 
 
-
+	// add the received result to dnsNames field
 	newDNS := append(dnsNames, concatenatedResult)
-	// fmt.Println("Appended to DnsNames:", newDNS) 
 
 	x509SVID, err := s.ca.SignWorkloadX509SVID(ctx, ca.WorkloadX509SVIDParams{
 		SPIFFEID:  id,
