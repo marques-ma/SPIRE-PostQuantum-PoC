@@ -1,9 +1,7 @@
-![SPIRE Logo](/doc/images/spire_logo.png)
-
 # IMPORTANT!!  
 This repository contains a SPIRE fork that leverages the OQS-OpenSSL docker image to add post quantum support to SPIFFE Verifiable Identity Document (SVID) (i.e., Certificate and Private key). 
 
-It is a **PROOF OF CONCEPT** that is not intended to be used in production environments.
+It is a **PROOF OF CONCEPT** that focus in implementing post-quantum algorithms in SPIRE, and it is not intended to be used in production environments.
 
 # Requirements  
 - Docker 
@@ -15,7 +13,41 @@ In this PoC, all SVID certificates have an additional DNSName: an encoded string
 The workload must fetch its SVID and extract the PQ crypto material from DNSName, and then use it when necessary.  
 The benefit of a containerized approach is ease of implementation, without very limiting specific requirements (e.g., specific versions of OpenSSL). The disadvantage, however, translates into higher computational cost, resulting from the adopted architecture.
 
+# How to use
+
+1 - Clone this repository  
+2 - Run sudo make build to create the binaries  
+3 - Edit the startenv.sh and modify the SPIREPATH value with your actual SPIRE path  
+4 - Execute startenv.sh  
+5 - Navigate to SPIRE directory and run the follow command to create a registration entry to your user:  
+
+```bash
+./bin/spire-server entry create \
+    -parentID spiffe://example.org/host \
+    -spiffeID spiffe://example.org/spiffeID \
+    -selector unix:user:username
+```
+6 - Usage example: navigate to examples/post-quantum and, with the user defined in step 5, execute:
+
+```bash
+go run fetch-pq-svid.go
+```
+
+The result is the SVID corresponding to the resgistration entry previously created, containing the crypto material in DNSName field.
+
+# How to replicate the benchmark execution
+
+After starting SPIRE-PQ successfully, navigate to benchmark directory and run:
+
+```bash
+benchmark <algorithm> <output_file>
+```
+
+Where the algorithm can be one of supported in list [Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md) and the output file base directory is the SPIRE root directory.  
+
+
 ---
+![SPIRE Logo](/doc/images/spire_logo.png)
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3303/badge)](https://bestpractices.coreinfrastructure.org/projects/3303)
 [![Build Status](https://github.com/spiffe/spire/actions/workflows/pr_build.yaml/badge.svg)](https://github.com/spiffe/spire/actions/workflows/pr_build.yaml)

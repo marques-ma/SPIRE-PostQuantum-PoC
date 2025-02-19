@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SPIREPATH="/home/byron/spire"
+export SPIREPATH="/home/byron/artifacts/SPIRE-PostQuantum-PoC"
 
 reset_spire() {
      kill -9 $(ps -ef | grep "spire-agent" | grep -v grep | awk '{print $2}')
