@@ -1,19 +1,19 @@
 ![SPIRE Logo](/doc/images/spire_logo.png)
 
 # IMPORTANT!!  
-This repository contains a SPIRE fork that leverages a local OQS-OpenSSL binary to include post quantum crypto material (i.e., Certificate and Private key). 
+This repository contains a SPIRE fork that leverages the OQS-OpenSSL docker image to add post quantum support to SPIFFE Verifiable Identity Document (SVID) (i.e., Certificate and Private key). 
 
 It is a **PROOF OF CONCEPT** that is not intended to be used in production environments.
 
 # Requirements  
-- OQS-OpenSSL fork installed (https://github.com/open-quantum-safe/openssl)  
+- Docker 
 - Go ^1.23  
 
 # Details
 The SPIRE Server CA now has a new function: GenWorkloadPQX509SVID, that is called when a new X509SVID is created.  
 In this PoC, all SVID certificates have an additional DNSName: an encoded string that contains the PQ certificate and private key, to be used by the workload in such connections.
-
-An example is available at https://github.com/marques-ma/pq-tls-poc
+The workload must fetch its SVID and extract the PQ crypto material from DNSName, and then use it when necessary.  
+The benefit of a containerized approach is ease of implementation, without very limiting specific requirements (e.g., specific versions of OpenSSL). The disadvantage, however, translates into higher computational cost, resulting from the adopted architecture.
 
 ---
 
