@@ -48,5 +48,5 @@ start_spire_agent
 # Optionally, use the command bellow to create a registry entry to your user. Modify according:
 # $SPIREPATH/bin/spire-server entry create \
 #     -parentID spiffe://example.org/host \
-#     -spiffeID spiffe://example.org/byron \
+#     -spiffeID spiffe://example.org/workloadID \
 #     -selector unix:user:<username>
