@@ -4,8 +4,9 @@ This repository contains a SPIRE fork that leverages the OQS-OpenSSL docker imag
 It is a **PROOF OF CONCEPT** that focus in implementing post-quantum algorithms in SPIRE, and it is not intended to be used in production environments.
 
 # Requirements  
-- Docker 
-- Go ^1.23  
+- Linux (tested in Debian 12)
+- Docker 27.3.1
+- Go 1.23.2  
 
 # Details
 The SPIRE Server CA now has a new function: GenWorkloadPQX509SVID, that is called when a new X509SVID is created.  
