@@ -20,13 +20,13 @@ The benefit of a containerized approach is ease of implementation, without very 
 2 - Run sudo make build to create the binaries  
 3 - Edit the startenv.sh and modify the SPIREPATH value with your actual SPIRE path  
 4 - Execute startenv.sh  
-5 - Navigate to SPIRE directory and run the follow command to create a registration entry to your user:  
+5 - Navigate to the SPIRE directory and run the following command to create a registry entry for your user (replace \<username\> with your username):  
 
 ```bash
 ./bin/spire-server entry create \
     -parentID spiffe://example.org/host \
     -spiffeID spiffe://example.org/spiffeID \
-    -selector unix:user:username
+    -selector unix:user:<username>
 ```
 6 - Usage example: navigate to examples/post-quantum and, with the user defined in step 5, execute:
 
