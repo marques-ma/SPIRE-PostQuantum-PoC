@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/881982910.svg)](https://doi.org/10.5281/zenodo.14902198)
 # IMPORTANT!!  
 This repository contains a SPIRE fork that leverages the OQS-OpenSSL docker image to add post quantum support to SPIFFE Verifiable Identity Document (SVID) (i.e., Certificate and Private key). 
 
