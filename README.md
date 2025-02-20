@@ -17,12 +17,12 @@ The benefit of a containerized approach is ease of implementation, without very 
 # How to use
 1 - Clone this repository  
 2 - Run sudo make build to create the binaries  
-3 - Edit the startenv.sh and modify the SPIREPATH value with your actual SPIRE path and PQALGO with the desired PQ algorithm  
-4 - Execute startenv.sh  
+3 - Edit the startenv.sh and modify the SPIREPATH value with your actual SPIRE path **(do not use relative path)** and PQALGO with the desired PQ algorithm  
+4 - Execute startenv.sh with sudo 
 5 - Navigate to the SPIRE directory and run the following command to create a registry entry for your user (replace \<username\> with your username):  
 
 ```bash
-./bin/spire-server entry create \
+sudo ./bin/spire-server entry create \
     -parentID spiffe://example.org/host \
     -spiffeID spiffe://example.org/spiffeID \
     -selector unix:user:<username>
@@ -33,7 +33,7 @@ The benefit of a containerized approach is ease of implementation, without very 
 go run fetch-pq-svid.go
 ```
 
-The result is the workload's private key and certificate created by the SPRE-Server.
+The result is the workload's private key and certificate created by the SPIRE-Server.
 
 # How to replicate the benchmark execution
 
