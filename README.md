@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 [![DOI](https://zenodo.org/badge/881982910.svg)](https://doi.org/10.5281/zenodo.14902198)
+=======
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14902199.svg)](https://doi.org/10.5281/zenodo.14902199)
+
+>>>>>>> a8f23786 (README.md updated)
 # IMPORTANT!!  
 This repository contains a SPIRE fork that leverages the OQS-OpenSSL docker image to add post quantum support to SPIFFE Verifiable Identity Document (SVID) (i.e., Certificate and Private key). 
 
@@ -7,7 +12,7 @@ It is a **PROOF OF CONCEPT** that focus in implementing post-quantum algorithms 
 # Requirements  
 - Linux (tested in Debian 12)
 - Docker 27.3.1
-- Go 1.23.2  
+- Go 1.23.3  
 
 # Details
 The SPIRE Server CA now has a new function: GenWorkloadPQX509SVID, that is called when a new X509SVID is created.  
@@ -18,8 +23,13 @@ The benefit of a containerized approach is ease of implementation, without very 
 # How to use
 1 - Clone this repository  
 2 - Run sudo make build to create the binaries  
+<<<<<<< HEAD
 3 - Edit the startenv.sh and modify the SPIREPATH value with your actual SPIRE path **(do not use relative path)** and PQALGO with the desired PQ algorithm  
 4 - Execute startenv.sh with sudo 
+=======
+3 - Edit the startenv.sh and modify the SPIREPATH value to the full path of the directory where the repository was cloned  
+4 - Execute startenv.sh  
+>>>>>>> a8f23786 (README.md updated)
 5 - Navigate to the SPIRE directory and run the following command to create a registry entry for your user (replace \<username\> with your username):  
 
 ```bash
@@ -31,20 +41,35 @@ sudo ./bin/spire-server entry create \
 6 - Usage example: navigate to examples/post-quantum and, with the user defined in step 5, execute:
 
 ```bash
+go mod tidy
 go run fetch-pq-svid.go
 ```
 
+<<<<<<< HEAD
 The result is the workload's private key and certificate created by the SPIRE-Server.
+=======
+The application will output the post quantum private key and certificate signed by SPIRE-Server.
+>>>>>>> a8f23786 (README.md updated)
 
 # How to replicate the benchmark execution
 
 Since the artifact implements a specific package to support PQ operations (i.e., github.com/marques-ma/oqsopenssl), this repository also includes a benchmark application to evaluate the oqsopenssl package performance. To run, navigate to benchmark directory and execute (it does not requires SPIRE to be running):
 
 ```bash
+<<<<<<< HEAD
 benchmark <algorithm> <duration_in_seconds> <output_file>
 ```
 
 Where the algorithm can be one of supported in list [Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md), duration_in_seconds is the test duration and the output file base directory is the SPIRE root directory.  
+=======
+go mod tidy
+go run benchmark.go <algorithm> <output_file>
+```
+
+Where `<algorithm>` can be one of supported in list [Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md) and the `<output_file>` will be saved in the SPIRE root directory.
+
+Using this application, the user will be able to compare the efficiency of all supported post quantum (including hybrid) signature algorithms running using the pq-openssl-3.x Go package.
+>>>>>>> a8f23786 (README.md updated)
 
 
 ---
