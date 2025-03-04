@@ -3,8 +3,9 @@ package main
 import (
         "fmt"
         "os"
+        "strconv"
 
-        "github.com/marques-ma/oqsopenssl"
+        oqsopenssl "github.com/marques-ma/pq-openssl-3.x"
 )
 
 func main() {
@@ -16,11 +17,15 @@ func main() {
         }
 
         algorithm := os.Args[1]
-        duration := os.Args[2]
+        duration, err := strconv.Atoi(os.Args[2])
+	if err != nil {
+		fmt.Println("Error converting duration to int:", err)
+		return
+	}
         outputFile := os.Args[3]
 
         // Start the container
-        err := oqsopenssl.StartOQSContainer()
+        err = oqsopenssl.StartOQSContainer()
         if err != nil {
                 fmt.Println("Error starting OQS container:", err)
                 return
