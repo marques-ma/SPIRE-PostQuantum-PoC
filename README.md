@@ -44,10 +44,10 @@ Since the artifact implements a specific package to support PQ operations (i.e.,
 
 ```bash
 go mod tidy
-go run benchmark.go <algorithm> <output_file>
+go run benchmark.go <algorithm> <duration_in_seconds> <output_file>
 ```
 
-Where `<algorithm>` can be one of supported in list [Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md) and the `<output_file>` will be saved in the SPIRE root directory.  
+Where `<algorithm>` can be one of supported in list [Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md), `<duration_in_seconds>` is the benchmark execution time, and the `<output_file>` will be saved in the SPIRE root directory.   
 Using this application, the user will be able to compare the efficiency of all supported post quantum (including hybrid) signature algorithms running using the pq-openssl-3.x Go package.
 
 Below is the default SPIRE README.md file
