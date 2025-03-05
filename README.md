@@ -20,7 +20,7 @@ The benefit of a containerized approach is ease of implementation, without very 
 1 - Clone this repository  
 2 - Run sudo make build to create the binaries  
 3 - Edit the startenv.sh and modify the SPIREPATH value with the full path of the directory where the repository was cloned **(do not use relative path)** and PQALGO with the desired PQ algorithm  
-4 - Execute startenv.sh with sudo  
+4 - Execute startenv.sh **without** sudo  
 5 - Navigate to the root of the repository and run the following command to create a registry entry for your user (replace `<username>` with your username):  
 
 ```bash
