@@ -8,8 +8,8 @@ export SPIREPATH="/home/byron/artifacts/SPIRE-PostQuantum-PoC"
 export PQALGO="p384_dilithium3"
 
 reset_spire() {
-     kill -9 $(ps -ef | grep "spire-agent" | grep -v grep | awk '{print $2}')
-     kill -9 $(ps -ef | grep "spire-server" | grep -v grep | awk '{print $2}')
+     sudo kill -9 $(ps -ef | grep "spire-agent" | grep -v grep | awk '{print $2}')
+     sudo kill -9 $(ps -ef | grep "spire-server" | grep -v grep | awk '{print $2}')
      rm -rf $SPIREPATH/.data
 }
 reset_spire
